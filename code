@@ -1,1 +1,70 @@
 
+
+
+
+from hub import light_matrix
+import runloop
+import motor
+import motor_pair
+from hub import motion_sensor
+from hub import port
+wheel_circumpharance = 7.85
+async def main():
+    class robot():
+        def __init__(self, velocity):
+            self.velocity = velocity
+
+
+        async def setup(self):
+            motor_pair.pair(1,port.A,port.E)
+
+
+        async def get_degree_from_inch(self, inch):
+            degree = int(inch * (360/wheel_circumpharance))
+            return degree
+
+
+        async def forward(self,inch):
+            degree = await self.get_degree_from_inch(inch)
+            await motor_pair.move_for_degrees(1,-degree,0,velocity=self.velocity)
+
+
+        async def backward(self,inch):
+            degree = await self.get_degree_from_inch(inch)
+            await motor_pair.move_for_degrees(1,degree,0,velocity=self.velocity)
+
+
+        async def turnleft(self,degree):
+            motion_sensor.reset_yaw(0)
+            motion_sensor.stable()
+            while motion_sensor.tilt_angles()[0]<degree:
+                motor_pair.move(1,-100,velocity=self.velocity)
+            motor_pair.stop(1)
+
+
+        async def turnright(self,degree):
+            motion_sensor.reset_yaw(0)
+            motion_sensor.stable()
+            print(motion_sensor.tilt_angles())
+            while motion_sensor.tilt_angles()[0]>-degree:
+                motor_pair.move(1,100,velocity=-self.velocity)
+            motor_pair.stop(1)
+        async def liftUP(self,degree):
+            await motor.run_for_degrees(port.B,degree,self.velocity)
+        async def liftDown(self,degree):
+            await motor.run_for_degrees(port.B,-degree,self.velocity)
+
+    tom=robot(360);
+    await tom.setup();
+    #await tom.forward(30);
+    #await tom.backward(20);
+    #await tom.turnleft(350);
+    await tom.liftUP(90)
+    await tom.liftDown(90)
+    #await tom.liftDown(90)
+    #await tom.turnright(90);
+    #await tom.backward(400);
+    
+
+runloop.run(main())
+
