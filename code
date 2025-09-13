@@ -1,1 +1,74 @@
 
+
+
+from hub import light_matrix
+import runloop
+import motor
+import motor_pair
+from hub import motion_sensor
+from hub import port
+wheel_circumpharance = 7.85
+async def main():
+    class robot():
+        def __init__(self, velocity):
+            self.velocity = velocity
+
+
+        async def setup(self):
+            motor_pair.pair(1,port.A,port.E)
+
+
+        async def get_degree_from_inch(self, inch):
+            degree = int(inch * (360/wheel_circumpharance))
+            return degree
+
+
+        async def forward(self,inch,steering,velocity):
+            degree = await self.get_degree_from_inch(inch)
+            await motor_pair.move_for_degrees(1,-degree,steering,velocity=velocity)
+
+
+        async def backward(self,inch,steering,velocity):
+            degree = await self.get_degree_from_inch(inch)
+            await motor_pair.move_for_degrees(1,degree,steering,velocity=velocity)
+
+
+        async def turnleft(self,degree,velocity):
+            motion_sensor.reset_yaw(0)
+            motion_sensor.stable()
+            while motion_sensor.tilt_angles()[0]<degree:
+                motor_pair.move(1,-100,velocity=velocity)
+            motor_pair.stop(1)
+
+
+        async def turnright(self,degree,velocity):
+            motion_sensor.reset_yaw(0)
+            motion_sensor.stable()
+            print(motion_sensor.tilt_angles())
+            while motion_sensor.tilt_angles()[0]>-degree:
+                motor_pair.move(1,100,velocity=-velocity)
+            motor_pair.stop(1)
+        async def rightMotorLiftUP(self,degree,velocity):
+            await motor.run_for_degrees(port.B,degree,velocity)
+        async def rightMotorliftDown(self,degree,velocity):
+            await motor.run_for_degrees(port.B,-degree,velocity)
+        async def leftMotorLiftUp(self,degree,velocity):
+            await motor.run_for_degrees(port.D,degree,velocity)
+        async def leftMotorLiftDown(self,degree,velocity):
+            await motor.run_for_degrees(port.D,-degree,velocity)
+    tom=robot(360);
+    await tom.setup();
+    await tom.forward(30,0,360);
+    await tom.turnleft(280,360)
+    await tom.forward(5 )
+    #await tom.backward(12,0,360);
+    #await tom.turnleft(300,360);
+    #await tom.leftMotorliftDown(20,360)
+    #await tom.forward(5,0,360)
+    #await tom.turnright(90,360);
+    #await tom.backward(40,0,360);
+    
+
+runloop.run(main())
+
+
